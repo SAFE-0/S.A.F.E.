@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إقرار وتنبيهات قانونية </title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h2>إقرار وتنبيهات قانونية </h2>
+    <form id="signupForm">
+        <label for="fullName">الاسم بالكامل:</label>
+        <input type="text" id="fullName" required>
+
+        <label for="email">البريد الإلكتروني:</label>
+        <input type="email" id="email" required>
+        <button type="button" id="sendEmailCode">إرسال كود التحقق</button>
+        <input type="text" id="emailCode" placeholder="أدخل كود التحقق" required>
+
+        <label for="phone">رقم الهاتف:</label>
+        <input type="tel" id="phone" required>
+        <button type="button" id="sendPhoneCode">إرسال كود التحقق</button>
+        <input type="text" id="phoneCode" placeholder="أدخل كود التحقق" required>
+
+        <label for="gender">الجنس:</label>
+        <select id="gender">
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+        </select>
+
+        <label for="nationality">الجنسية:</label>
+        <input type="text" id="nationality" required>
+
+        <label>
+            <input type="checkbox" id="terms" required>
+            أوافق على <a href="terms.html" target="_blank">الإقرار وكافة البنود المذكورة</a>
+        </label>
+
+        <p><strong>📌 رابط قناة الواتساب:</strong> <a href="https://whatsapp.com/channel/0029Vb8xtjLIHphPBtwBWu3J" target="_blank">انضم للقناة</a></p>
+
+        <button type="submit">إرسال</button>
+    </form>
+
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
