@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إقرار وتنبيهات قانونية</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            direction: rtl;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            text-align: center;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: block;
+            font-size: 14px;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row-reverse;
+        }
+        .btn-group button {
+            flex: 1;
+            margin: 5px;
+            padding: 6px;
+            font-size: 12px;
+        }
+        .terms {
+            text-align: right;
+        }
+        .whatsapp-link {
+            text-align: left;
+        }
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
+        .note {
+            font-size: 12px;
+            color: gray;
+            text-align: center;
+            margin-top: 15px;
+        }
+        .header {
+            background-color: blue;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">.S.A.F.E</div>
+
+<div class="container">
+    <h2>إقرار وتنبيهات قانونية</h2>
+
+    <form id="signupForm">
+        <input type="text" id="fullName" placeholder="الاسم بالكامل" required>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+
+        <div class="btn-group">
+            <button type="button" id="sendVerifyEmail">إرسال رابط التحقق</button>
+            <button type="button" id="verifyEmailBtn">تأكيد التحقق</button>
+        </div>
+
+        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+
+        <select id="gender">
+            <option value="" disabled selected>اختر الجنس</option>
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+        </select>
+
+        <input type="text" id="nationality" placeholder="الجنسية" required>
+
+        <div class="terms">
+            <label>
+                أوافق على <a href="terms.html" target="_blank">الإقرار وسياسة الاستخدام</a>
+                <input type="checkbox" id="terms" required>
+            </label>
+        </div>
+
+        <p class="whatsapp-link">📌 انضم إلى <a href="https://whatsapp.com/channel/0029Vb8xtjLIHphPBtwBWu3J" target="_blank">قناة الواتساب</a></p>
+
+        <button type="button" id="submitDataBtn" disabled>إرسال البيانات</button>
+        <div class="loading">⏳ جاري الإرسال...</div>
+    </form>
+
+    <p class="note">⚠️ لا يمكن تعديل هذه البيانات بعد إرسالها.</p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxorEgUgnocy0vlJolVEtUkz-oyyWbLg",
+    authDomain: "forms-v.firebaseapp.com",
+    projectId: "forms-v",
+    storageBucket: "forms-v.firebasestorage.app",
+    messagingSenderId: "55307283635",
+    appId: "1:55307283635:web:f88d8f3387c928830ad4c6"
+  };
+
+  function showMessage(message) {
+    alert(message);
+  }
+
+  let auth, db;
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } catch (error) {
+    console.error("❌ فشل الاتصال بـ Firebase:", error);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sendVerifyBtn = document.getElementById("sendVerifyEmail");
+    const checkVerifyBtn = document.getElementById("verifyEmailBtn");
+    const submitDataBtn = document.getElementById("submitDataBtn");
+    const loadingIndicator = document.querySelector(".loading");
+
+    sendVerifyBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = "DefaultPassword123";
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        await sendEmailVerification(user);
+        alert("📩 تم إرسال رابط التحقق إلى بريدك الإلكتروني.");
+      } catch (error) {
+        if (error.code === "auth/email-already-in-use") {
+          alert("❌ تم رفع إقرار لهذا الحساب بالفعل.");
+        } else {
+          alert("❌ خطأ: " + error.message);
+        }
+      }
+    });
+
+    checkVerifyBtn.addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (user) {
+        await user.reload();
+        if (user.emailVerified) {
+          alert("✅ تم التحقق! يمكنك الآن إرسال البيانات.");
+          submitDataBtn.disabled = false;
+        } else {
+          alert("⚠️ لم يتم التحقق بعد.");
+        }
+      } else {
+        alert("❌ لا يوجد مستخدم مسجل حاليًا.");
+      }
+    });
+
+    submitDataBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const name = document.getElementById("fullName").value;
+      const phone = document.getElementById("phone").value;
+      const gender = document.getElementById("gender").value;
+      const nationality = document.getElementById("nationality").value;
+      const termsAccepted = document.getElementById("terms").checked;
+      const user = auth.currentUser;
+
+      if (!name || !email || !phone || !gender || !nationality || !termsAccepted) {
+        alert("❌ عليك ملء جميع البيانات المطلوبة أولاً.");
+        return;
+      }
+
+      if (!user || !user.emailVerified) {
+        alert("⚠️ يجب تأكيد البريد الإلكتروني قبل الإرسال.");
+        return;
+      }
+
+      const existingQuery = query(collection(db, "submissions"), where("email", "==", email));
+      const querySnapshot = await getDocs(existingQuery);
+
+      if (!querySnapshot.empty) {
+        alert("❌ تم رفع إقرار سابق لهذا الحساب.");
+        return;
+      }
+
+      loadingIndicator.style.display = "block";
+
+      try {
+        await addDoc(collection(db, "submissions"), { name, email, phone, gender, nationality });
+        window.location.href = "success.html";
+      } catch (error) {
+        alert("❌ فشل في إرسال البيانات: " + error.message);
+      } finally {
+        loadingIndicator.style.display = "none";
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
