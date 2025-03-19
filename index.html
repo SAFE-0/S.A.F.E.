@@ -1,169 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إقرار وتنبيهات قانونية</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            direction: rtl;
-            text-align: center; /* جعل النص في المنتصف */
-            font-family: Arial, sans-serif;
-            font-size: 12px; /* تصغير الخط */
-        }
-        .container {
-            max-width: 400px;
-            margin: auto;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 8px;
-            margin: 4px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            display: block;
-            font-size: 12px; /* تصغير الخط */
-        }
-        .btn-group {
-            display: flex;
-            justify-content: center; /* جعل الأزرار في المنتصف */
-        }
-        .btn-group button {
-            flex: 1;
-            margin: 4px;
-            font-size: 12px; /* تصغير الخط */
-        }
-        .terms {
-            text-align: center; /* جعل النص في المنتصف */
-            font-size: 12px; /* تصغير الخط */
-        }
-        .whatsapp-link {
-            text-align: center; /* جعل النص في المنتصف */
-            font-size: 12px; /* تصغير الخط */
-        }
-        .small-btn {
-            padding: 6px 12px;
-            font-size: 12px; /* تصغير الخط */
-            margin-top: 4px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>إقرار وتنبيهات قانونية</h2>
-
-    <form id="signupForm">
-        <input type="text" id="fullName" placeholder="الاسم بالكامل" required>
-        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
-
-        <div class="btn-group">
-            <button type="button" id="verifyEmailBtn">تأكيد التحقق</button>
-            <button type="button" id="sendVerifyEmail" class="small-btn">إرسال رابط التحقق</button>
-        </div>
-
-        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
-
-        <select id="gender">
-            <option value="" disabled selected>اختر الجنس</option>
-            <option value="male">ذكر</option>
-            <option value="female">أنثى</option>
-        </select>
-
-        <input type="text" id="nationality" placeholder="الجنسية" required>
-
-        <div class="terms">
-            <label>
-                أوافق على <a href="terms.html" target="_blank">الإقرار وسياسة الاستخدام</a>
-                <input type="checkbox" id="terms" required>
-            </label>
-        </div>
-
-        <p class="whatsapp-link">📌 انضم إلى <a href="https://whatsapp.com/channel/0029Vb8xtjLIHphPBtwBWu3J" target="_blank">قناة الواتساب</a></p>
-
-        <button type="button" id="submitDataBtn" disabled>إرسال البيانات</button>
-    </form>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcxorEgUgnocy0vlJolVEtUkz-oyyWbLg",
-    authDomain: "forms-v.firebaseapp.com",
-    projectId: "forms-v",
-    storageBucket: "forms-v.firebasestorage.app",
-    messagingSenderId: "55307283635",
-    appId: "1:55307283635:web:f88d8f3387c928830ad4c6"
-  };
-
-  function showMessage(message, color) {
-    alert(message);
-  }
-
-  let auth, db;
-  try {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-  } catch (error) {
-    console.error("❌ فشل الاتصال بـ Firebase:", error);
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const sendVerifyBtn = document.getElementById("sendVerifyEmail");
-    const checkVerifyBtn = document.getElementById("verifyEmailBtn");
-    const submitDataBtn = document.getElementById("submitDataBtn");
-
-    sendVerifyBtn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = "DefaultPassword123";
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        await sendEmailVerification(user);
-        alert("📩 تم إرسال رابط التحقق إلى بريدك الإلكتروني.");
-      } catch (error) {
-        alert("❌ خطأ: " + error.message);
-      }
-    });
-
-    checkVerifyBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (user) {
-        await user.reload();
-        if (user.emailVerified) {
-          alert("✅ تم التحقق! يمكنك الآن إرسال البيانات.");
-          submitDataBtn.disabled = false;
-        } else {
-          alert("⚠️ لم يتم التحقق بعد.");
-        }
-      } else {
-        alert("❌ لا يوجد مستخدم مسجل حاليًا.");
-      }
-    });
-
-    submitDataBtn.addEventListener("click", async () => {
-      try {
-        await addDoc(collection(db, "submissions"), {
-          name: document.getElementById("fullName").value,
-          email: document.getElementById("email").value,
-          phone: document.getElementById("phone").value,
-          gender: document.getElementById("gender").value,
-          nationality: document.getElementById("nationality").value
-        });
-
-        window.location.href = "success.html";
-      } catch (error) {
-        alert("❌ فشل في إرسال البيانات: " + error.message);
-      }
-    });
-  });
-</script>
-
-</body>
-</html>
