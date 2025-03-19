@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إقرار وتنبيهات قانونية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<style>
+  #firebase-status {
+    position: fixed;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: top 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    opacity: 0;
+    z-index: 1000;
+  }
+</style>
+
+<div id="firebase-status"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxorEgUgnocy0vlJolVEtUkz-oyyWbLg",
+    authDomain: "forms-v.firebaseapp.com",
+    projectId: "forms-v",
+    storageBucket: "forms-v.firebasestorage.app",
+    messagingSenderId: "55307283635",
+    appId: "1:55307283635:web:f88d8f3387c928830ad4c6"
+  };
+
+  function showMessage(message, color) {
+    const statusDiv = document.getElementById("firebase-status");
+    statusDiv.textContent = message;
+    statusDiv.style.color = color;
+    statusDiv.style.top = "10px"; 
+    statusDiv.style.opacity = "1";
+
+    setTimeout(() => {
+      statusDiv.style.top = "-50px"; 
+      statusDiv.style.opacity = "0";
+    }, 1600);
+  }
+
+  let auth, db, recaptchaVerifier;
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    console.log("✅ تم الاتصال بـ Firebase!");
+    showMessage("✅ تم الاتصال بـ Firebase", "green");
+  } catch (error) {
+    console.error("❌ فشل الاتصال بـ Firebase:", error);
+    showMessage("❌ فشل الاتصال بـ Firebase", "red");
+  }
+
+  function formatPhoneNumber(phone) {
+    if (!phone.startsWith("+")) {
+      alert("❌ يرجى إدخال رقم الهاتف بصيغة دولية مثل: +201234567890");
+      return null;
+    }
+    return phone;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sendPhoneCodeBtn = document.getElementById("sendPhoneCode");
+    const signupForm = document.getElementById("signupForm");
+
+    sendPhoneCodeBtn.addEventListener("click", () => {
+      const phone = formatPhoneNumber(document.getElementById("phone").value);
+      if (!phone) return;
+
+      if (!recaptchaVerifier) {
+        recaptchaVerifier = new RecaptchaVerifier(auth, 'sendPhoneCode', {
+          'size': 'invisible'
+        });
+      }
+
+      signInWithPhoneNumber(auth, phone, recaptchaVerifier)
+        .then((confirmationResult) => {
+          window.confirmationResult = confirmationResult;
+          alert("✅ تم إرسال كود التحقق إلى هاتفك!");
+        })
+        .catch((error) => {
+          console.error("❌ خطأ في إرسال الكود:", error);
+          switch (error.code) {
+            case "auth/invalid-phone-number":
+              alert("❌ رقم الهاتف غير صالح. تأكد من كتابته بصيغة صحيحة.");
+              break;
+            case "auth/missing-phone-number":
+              alert("❌ يرجى إدخال رقم الهاتف.");
+              break;
+            case "auth/quota-exceeded":
+              alert("⚠️ لقد تجاوزت الحد الأقصى لطلبات التحقق. حاول لاحقًا.");
+              break;
+            case "auth/too-many-requests":
+              alert("⚠️ تم حظر التحقق مؤقتًا بسبب عدد كبير من المحاولات.");
+              break;
+            default:
+              alert("❌ حدث خطأ غير متوقع: " + error.message);
+          }
+        });
+    });
+
+    signupForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const phoneCode = document.getElementById("phoneCode").value;
+      if (!window.confirmationResult) {
+        alert("⚠️ يرجى أولاً إرسال كود التحقق إلى الهاتف.");
+        return;
+      }
+
+      window.confirmationResult.confirm(phoneCode)
+        .then(() => {
+          alert("✅ تم التحقق من الهاتف بنجاح!");
+        })
+        .catch((error) => {
+          console.error("❌ كود الهاتف غير صحيح:", error);
+          alert("❌ كود الهاتف غير صحيح!");
+        });
+    });
+  });
+</script>
+
+    <div class="container">
+        <h2 style="margin-top: 75px; text-align: center;">إقرار وتنبيهات قانونية</h2>
+        
+        <form id="signupForm">
+            <input type="text" id="fullName" placeholder="الاسم بالكامل" required>
+            <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+
+            <input type="tel" id="phone" placeholder="رقم الهاتف (يجب أن يبدأ بـ +)" required>
+            <button type="button" id="sendPhoneCode">حمرا يا بده 😁</button>
+            <input type="text" id="phoneCode" placeholder="أدخل كود التحقق" required>
+
+            <select id="gender">
+                <option value="" disabled selected>اختر الجنس </option>
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+            </select>
+
+            <input type="text" id="nationality" placeholder="الجنسية" required>
+
+            <div class="terms">
+                <label>
+                    أوافق على <a href="terms.html" target="_blank">الإقرار وسياسة استخدام القناة</a>
+                    <input type="checkbox" id="terms" required>
+                </label>
+            </div>
+
+            <p class="whatsapp-link">📌 انضم إلى <a href="https://whatsapp.com/channel/0029Vb8xtjLIHphPBtwBWu3J" target="_blank">قناة الواتساب</a></p>
+
+            <button type="submit">إرسال البيانات</button>
+        </form>
+    </div>
+
+</body>
+</html>
