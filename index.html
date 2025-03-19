@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إقرار وتنبيهات قانونية</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #firebase-status {
+            position: fixed;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: top 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
+            z-index: 1000;
+        }
+        .loading {
+            background-color: #ccc !important;
+            cursor: not-allowed;
+            position: relative;
+        }
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ccc;
+            border-top-color: #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            z-index: 2000;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .small-btn {
+            background-color: #f0f0f0;
+            border: 2px solid #ddd;
+            color: green;
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .small-btn:hover {
+            background-color: #e0e0e0;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            text-align: center;
+        }
+        .email-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="firebase-status"></div>
+<div class="loading-spinner" id="loadingSpinner"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxorEgUgnocy0vlJolVEtUkz-oyyWbLg",
+    authDomain: "forms-v.firebaseapp.com",
+    projectId: "forms-v",
+    storageBucket: "forms-v.firebasestorage.app",
+    messagingSenderId: "55307283635",
+    appId: "1:55307283635:web:f88d8f3387c928830ad4c6"
+  };
+
+  function showMessage(message, color) {
+    const statusDiv = document.getElementById("firebase-status");
+    statusDiv.textContent = message;
+    statusDiv.style.color = color;
+    statusDiv.style.top = "10px"; 
+    statusDiv.style.opacity = "1";
+    setTimeout(() => {
+      statusDiv.style.top = "-50px"; 
+      statusDiv.style.opacity = "0";
+    }, 1600);
+  }
+
+  function showLoading(show) {
+    document.getElementById("loadingSpinner").style.display = show ? "block" : "none";
+  }
+
+  let auth, db;
+  try {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    showMessage("✅ تم الاتصال بـ Firebase", "green");
+  } catch (error) {
+    showMessage("❌ فشل الاتصال بـ Firebase", "red");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sendVerifyBtn = document.getElementById("sendVerifyEmail");
+    const checkVerifyBtn = document.getElementById("verifyEmailBtn");
+    const submitDataBtn = document.getElementById("submitDataBtn");
+
+    sendVerifyBtn.addEventListener("click", async () => {
+      sendVerifyBtn.classList.add("loading");
+      showLoading(true);
+      const email = document.getElementById("email").value;
+      const password = "DefaultPassword123";  
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        await sendEmailVerification(user);
+        alert("📩 تم إرسال رابط التحقق إلى بريدك الإلكتروني.");
+      } catch (error) {
+        alert("❌ خطأ: " + error.message);
+      } finally {
+        sendVerifyBtn.classList.remove("loading");
+        showLoading(false);
+      }
+    });
+
+    checkVerifyBtn.addEventListener("click", async () => {
+      checkVerifyBtn.classList.add("loading");
+      showLoading(true);
+      const user = auth.currentUser;
+      await user.reload();
+      if (user.emailVerified) {
+        alert("✅ تم التحقق! يمكنك الآن إرسال البيانات.");
+        submitDataBtn.disabled = false;
+      } else {
+        alert("⚠️ لم يتم التحقق بعد.");
+      }
+      checkVerifyBtn.classList.remove("loading");
+      showLoading(false);
+    });
+
+    submitDataBtn.addEventListener("click", async () => {
+      if (submitDataBtn.disabled) {
+        alert("⚠️ لم يتم التحقق من البريد بعد!");
+        return;
+      }
+      submitDataBtn.classList.add("loading");
+      showLoading(true);
+      try {
+        await addDoc(collection(db, "submissions"), {
+          name: document.getElementById("fullName").value,
+          email: document.getElementById("email").value,
+          phone: document.getElementById("phone").value,
+          gender: document.getElementById("gender").value,
+          nationality: document.getElementById("nationality").value
+        });
+        window.location.href = "success.html"; 
+      } catch (error) {
+        alert("❌ فشل في إرسال البيانات: " + error.message);
+      }
+    });
+  });
+</script>
+
+<div class="container">
+    <h2>إقرار وتنبيهات قانونية</h2>
+
+    <form id="signupForm">
+        <input type="text" id="fullName" placeholder="الاسم بالكامل" required>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+        <div class="email-actions">
+            <button type="button" id="sendVerifyEmail" class="small-btn">📩 إرسال رابط التحقق</button>
+            <button type="button" id="verifyEmailBtn" class="small-btn">✅ تأكيد التحقق</button>
+        </div>
+
+        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+
+        <button type="button" id="submitDataBtn" disabled>🚀 إرسال البيانات</button>
+    </form>
+</div>
+
+</body>
+</html>
